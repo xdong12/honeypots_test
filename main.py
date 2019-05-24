@@ -678,7 +678,7 @@ def get_all_nodes(task_type='all',hp_id=None):
         for row in rows:
             if task_type != 'all' and row['task_type'] != task_type:
                 continue
-            if row in g_ignore_node_list:
+            if row['node_id'] in g_ignore_node_list:
                 continue
             g_node[row['node_id']] = {
                 'node_id': row['node_id'],
@@ -742,7 +742,7 @@ def node_bind(*args, **kwargs):
 
     # 绑定后忽略20分钟
     global g_ignore_node_list
-    g_ignore_node_list.append(node)
+    g_ignore_node_list.append(node['node_id'])
     t_ignore = threading.Timer(1200, node_ignore, args=(node,))
     t_ignore.setDaemon(True)
     t_ignore.start()
