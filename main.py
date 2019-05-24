@@ -347,12 +347,22 @@ def get_one_server(hp_id, is_open, *args, **kwargs):
 
 def get_honeypots_list(*args, **kwargs):
     results = post(g_honeypots_list_url, is_json=False)
-    honeypots_list = list()
+    honeypots_high = []
+    honeypots_low = []
 
     rows = results.get('rows')
-    for pot_type in rows.values():
-        for pot in pot_type:
-            honeypots_list.append(pot)
+    for k, v in rows.items():
+        if k in ('windows', 'ubuntu', 'centos'):
+            for pot in v:
+                honeypots_high.append(pot)
+        else:
+            for pot in v:
+                honeypots_low.append(pot)
+
+    honeypots_list = {
+        'low': honeypots_low,
+        'high': honeypots_high
+    }
 
     return honeypots_list
 
@@ -393,13 +403,13 @@ def honeypots_add(*args, **kwargs):
         logger.info('部署中的主机蜜罐数量超过限制')
         return
 
-    honeypots = g_honeypots_list
+    honeypots = g_honeypots_list.get('high')
 
     # 随机需要部署的蜜罐
-    while True:
-        test_honeypot = honeypots[random.randint(0, len(honeypots)-1)]
-        if test_honeypot['pot_desc'] not in g_failure_list:
-            break
+    # while True:
+    test_honeypot = honeypots[random.randint(0, len(honeypots)-1)]
+        # if test_honeypot['pot_desc'] not in g_failure_list:
+        #     break
     # 4. 调用接口下发部署任务
     data = {
         'pot_id': test_honeypot['pot_id'],
@@ -428,11 +438,19 @@ def honeypots_add_alert(*args, **kwargs):
         logger.info('部署中的报警蜜罐数量超过限制')
         return
 
-    # 调用接口下发部署任务
+
+    honeypots = g_honeypots_list.get('low')
+
+    # 随机需要部署的蜜罐
+    # while True:
+    test_honeypot = honeypots[random.randint(0, len(honeypots)-1)]
+        # if test_honeypot['pot_desc'] not in g_failure_list:
+        #     break
+    # 4. 调用接口下发部署任务
     data = {
-        'pot_id': 'pot_id_f8acf54a-ce49-4246-8e0b-4adfa522368a0001',
-        'hp_name': '{:0>6d}_{}'.format(random.randint(1, 999999), '报警蜜罐'),
-        'hp_desc': '{:0>6d}_{}'.format(random.randint(1, 999999), '报警蜜罐')
+        'pot_id': test_honeypot['pot_id'],
+        'hp_name': '{:0>6d}_{}'.format(random.randint(1, 999999), test_honeypot['pot_desc']),
+        'hp_desc': '{:0>6d}_{}'.format(random.randint(1, 999999), test_honeypot['pot_desc']),
     }
 
     result = post(g_add_url, data, is_json=False)
@@ -909,7 +927,8 @@ if __name__ == '__main__':
     # token = get_token()
     # g_server_config['user_token'] = token
     # init_urls()
-    # get_honeypots_list()
+    # g_honeypots_list = get_honeypots_list()
+    # honeypots_add_alert()
     # delete_all_failed()
     #
     # # li = get_all_nodes(hp_id="hp_0df8080f-ffd3-62b3-6a5f-7f4e7ad84960")
